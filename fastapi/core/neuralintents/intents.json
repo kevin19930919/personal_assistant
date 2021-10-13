@@ -1,0 +1,45 @@
+{
+    "intents":[
+        {
+            "tag":"send_mail",
+            "patterns":["send e-mail",
+                        "send mail",
+                        "send mail to company",
+                        "send e-mail to my boss"],
+            "responses":["OK,give me a second"]            
+
+        },
+        {
+            "tag":"chatting",
+            "patterns":["Hi",
+                        "Morning",
+                        "Hello",
+                        "What's up~",
+                        "My man",
+                        "yo"],
+
+            "responses":["Hello~ nice to meet you",
+                         "yo~ my man",
+                         "what's upppppppppp!",
+                         "Morning~"]            
+        },
+        {
+            "tag":"mount_AIDMS_db",
+            "patterns":["mount AIDMS db",
+                        "connect AIDMS db to host",
+                        "sshfs AIDMS path"
+                        ],
+            "responses":["launching connect now......"]            
+
+        },
+        {
+            "tag":"stop_apache_server",
+            "patterns":["stop apache server",
+                        "disconnect apache server"
+                        ],
+            "responses":["stopping apache server now"]            
+
+        }
+    ]
+
+}
