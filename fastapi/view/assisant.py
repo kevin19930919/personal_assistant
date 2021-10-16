@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException,Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException,Request, WebSocket
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 import sys
 sys.path.append('/data2/kevin7552/personal_assistant/fastapi/core')
 from neuralintents.assisant import Assisant
@@ -33,13 +34,21 @@ function_maps = {
     'send_mail':send_mail,
     'mount_AIDMS_db':mount_AIDMS_db
 }
-# @assisantRouter.get("/assisant")
-# async def command_assisant(message : str):
-#     return json
 
+templates = Jinja2Templates(directory="templates")
+
+#===============================api======================================
 @assisantRouter.get('/assisant')
-def update_assisant(sentence:str):
+def render_assisant(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@assisantRouter.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
     assisant = Assisant(function_maps)
     assisant.load_model()
     assisant.load_intents_file()
-    assisant.get_response(sentence=sentence)
+    await websocket.accept()
+    while True:
+        message = await websocket.receive_text()
+        assisant.get_response(sentence=message)
+        await websocket.send_text(f"Message text was: {data}")    

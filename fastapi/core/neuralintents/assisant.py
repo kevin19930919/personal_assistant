@@ -66,3 +66,8 @@ class Assisant():
         response = self.predict_response(inputs)
         if response in self.intent_methods.keys():
             self.intent_methods[response]()
+            return f'operation {response} successfully done'
+        else:
+            return "I dont't know what's your intents"
+
+
