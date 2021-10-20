@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title></title>
+    <meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <style>
+        p {
+            text-align: left;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="width: 800px;height: 600px;margin: 30px auto;text-align: center">
+        <h1>chat room</h1>
+        <div style="width: 800px;border: 1px solid gray;height: 300px;">
+            <div style="width: 200px;height: 300px;float: left;text-align: left;">
+                <p><span>users online:</span><span id="user_num">0</span></p>
+                <div id="user_list" style="overflow: auto;">
+
+                </div>
+            </div>
+            <div id="chat_box" style="width: 598px;border:  1px solid gray; height: 300px;overflow: scroll;float: left;">
+            </div>
+        </div>
+        <br>
+        <textarea id="msg_box" rows="6" cols="50" onkeydown="confirm(event)"></textarea><br>
+        <input type="button" value="send" onclick="send()">
+    </div>
+</body>
+
+</html>
+
+<script type="text/javascript">
+    var uname = prompt('Enter your user name', 'user' );
+    // websocket protocal
+    main_url = `${location.host}`;
+    var ws = new WebSocket('ws://'+main_url+'/chat');
+    ws.onopen = function() {
+        var data = "connect to server success";
+        listMsg(data);
+    };
+
+    ws.onmessage = function(e) {
+        console.log(e)
+        var msg = JSON.parse(e.data);
+
+        var data =  msg.content;
+        listMsg(data);
+    };
+
+    ws.onerror = function() {
+        var data = "something go wrong,please contact us";
+        listMsg(data);
+    };
+
+    function confirm(event) {
+        var key_num = event.keyCode;
+        if (13 == key_num) {
+            send();
+        } else {
+            return false;
+        }
+    }
+
+    function send() {
+        var msg_box = document.getElementById("msg_box");
+        var content = msg_box.value;
+        var reg = new RegExp("\r\n", "g");
+        content = content.replace(reg, "");
+        var msg = {
+            'content': content.trim(),
+            'type': 'send'
+        };
+        sendMsg(msg);
+        msg_box.value = '';
+    }
+
+    function listMsg(data) {
+        var chat_box = document.getElementById("chat_box");
+        var msg = document.createElement("p");
+
+        msg.innerHTML = data;
+        chat_box.appendChild(msg);
+        chat_box.scrollTop = chat_box.scrollHeight;
+    }
+
+    function dealUser(user_name, type, name_list) {
+        var user_list = document.getElementById("user_list");
+        var user_num = document.getElementById("user_num");
+        while (user_list.hasChildNodes()) {
+            user_list.removeChild(user_list.firstChild);
+        }
+
+        for (var index in name_list) {
+            var user = document.createElement("p");
+            user.innerHTML = name_list[index];
+            user_list.appendChild(user);
+        }
+        user_num.innerHTML = name_list.length;
+        user_list.scrollTop = user_list.scrollHeight;
+
+        var change = type == 'login' ? '上线' : '下线';
+
+        var data = '系统消息: ' + user_name + ' 已' + change;
+        listMsg(data);
+    }
+
+    function sendMsg(msg) {
+        var data = JSON.stringify(msg);
+        ws.send(data);
+    }
+
+</script>

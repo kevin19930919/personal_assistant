@@ -1,54 +1,39 @@
 from fastapi import APIRouter, HTTPException,Request, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.encoders import jsonable_encoder
+import json
 import sys
 sys.path.append('/data2/kevin7552/personal_assistant/fastapi/core')
 from neuralintents.assisant import Assisant
-from AIDMS_module import AIDMSHandler
-from week_report import WeekReport
 
-#=========responese function==================
-def send_mail():
-    Filepath = input("what file you want to attach?(abs path plz)")
-    WeekReport.send_mail(Filepath)
 
-def stop_apache_server():
-    pop = subprocess.Popen('sudo service apache2 stop',shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-    stdout,stderr = pop.communicate()
-    stdout = stdout.decode('utf-8')
-    stderr = stderr.decode('utf-8')
-    if stderr:
-        print(f'stop apache2 fail: {stderr}')
-        return False
-    else:
-        print('stop apache server success')
-        return True    
-
-def mount_AIDMS_db():
-    AIDMSHandler.mount_AIDMS_db_impl()
 
 
 assisantRouter = APIRouter()
 
-function_maps = {
-    'send_mail':send_mail,
-    'mount_AIDMS_db':mount_AIDMS_db
-}
-
 templates = Jinja2Templates(directory="templates")
 
+#======initial model====================================================
+assisant = Assisant()
+assisant.load_model()
+assisant.load_intents_file()
 #===============================api======================================
 @assisantRouter.get('/assisant')
 def render_assisant(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse("chat_room.html", {"request": request})
 
-@assisantRouter.websocket("/ws")
+@assisantRouter.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket):
-    assisant = Assisant(function_maps)
-    assisant.load_model()
-    assisant.load_intents_file()
     await websocket.accept()
     while True:
         message = await websocket.receive_text()
-        assisant.get_response(sentence=message)
-        await websocket.send_text(f"Message text was: {data}")    
+        responseMessage = assisant.request(sentence=message)
+        response = jsonable_encoder(
+            {
+                'content':f"Message text was: {responseMessage}"
+            }
+        )
+        await websocket.send_json(response)
+
+
